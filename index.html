@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8' />
+    <title>Zanzibar Fishing</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.47.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      #map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+      <style>
+        #menu {
+          position: absolute;
+          background: #fff;
+          padding: 10px;
+          font-family: 'Open Sans', sans-serif;
+        }
+      </style>
+  
+    <div id='map'></div>
+    <div id='menu'>
+      <input id='cjkrl6g7p1b6z2rmsti0t64av' type='radio' name='rtoggle' value='dark'>
+      <label for='dark'>dark</label>
+      <input id='cjkrl6w5n2klr2rmtv06xd875' type='radio' name='rtoggle' value='satellite'>
+      <label for='satellite'>satellite</label>
+    </div>
+
+    <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFyZW5hYiIsImEiOiJjajV2ajVyZXUwMnN3MzNwNzR3Ynk2cjIyIn0.sI-ynx23EEdpZFbEDu6qjA'; // replace this with your access token
+    
+    // Set bounds to Zanzibar
+    var bounds = [
+    [38.111572265625, -6.986406835762532], // Southwest coordinates
+    [40.484619140625, -5.244127581489528]  // Northeast coordinates
+    ];
+
+    // Initialize map
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/marenab/cjkrl6w5n2klr2rmtv06xd875', // replace this with your style URL
+      center: [39.34204101562499, -6.129631376647244],
+      zoom: 8,
+      maxBounds: bounds // Sets bounds as max
+    });
+
+    // Add zoom and rotation controls to the map.
+    map.addControl(new mapboxgl.NavigationControl());
+
+  function mapReset() {
+    if (window.innerWidth < 800) {
+      map.setZoom(6.7);
+    } else {
+        map.setZoom(8);
+    }
+  }
+
+  map.on('style.load', function() {
+    mapReset();
+
+    // Add a new source from our GeoJSON data
+    map.addSource('boats', {
+    type: 'geojson',
+    data: './boats.geojson'
+  });
+  // add heatmap layer here
+map.addLayer({
+  id: 'boats',
+  type: 'heatmap',
+  source: 'boats',
+  maxzoom: 15,
+  paint: {
+    // increase weight as diameter breast height increases
+    'heatmap-weight': {
+      property: 'dbh',
+      type: 'exponential',
+      stops: [
+        [1, 0],
+        [62, 1]
+      ]
+    },
+    // increase intensity as zoom level increases
+    'heatmap-intensity': {
+      stops: [
+        [11, 1],
+        [15, 3]
+      ]
+    },
+    // assign color values be applied to points depending on their density
+    'heatmap-color': [
+      'interpolate',
+      ['linear'],
+      ['heatmap-density'],
+      0, 'rgba(236,222,239,0)',
+      0.2, 'rgb(208,209,230)',
+      0.4, 'rgb(166,189,219)',
+      0.6, 'rgb(103,169,207)',
+      0.8, 'rgb(28,144,153)'
+    ],
+    // increase radius as zoom increases
+    'heatmap-radius': {
+      stops: [
+        [11, 15],
+        [15, 20]
+      ]
+    },
+    // decrease opacity to transition into the circle layer
+    'heatmap-opacity': {
+      default: 1,
+      stops: [
+        [14, 1],
+        [15, 0]
+      ]
+    },
+  }
+}, 'waterway-label');
+
+  // add circle layer here
+map.addLayer({
+  id: 'boats-point',
+  type: 'circle',
+  source: 'boats',
+  minzoom: 14,
+  paint: {
+    // increase the radius of the circle as the zoom level and dbh value increases
+    'circle-radius': {
+      property: 'dbh',
+      type: 'exponential',
+      stops: [
+        [{ zoom: 15, value: 1 }, 5],
+        [{ zoom: 15, value: 62 }, 10],
+        [{ zoom: 22, value: 1 }, 20],
+        [{ zoom: 22, value: 62 }, 50],
+      ]
+    },
+    'circle-color': {
+      property: 'dbh',
+      type: 'exponential',
+      stops: [
+        [0, 'rgba(236,222,239,0)'],
+        [10, 'rgb(236,222,239)'],
+        [20, 'rgb(208,209,230)'],
+        [30, 'rgb(166,189,219)'],
+        [40, 'rgb(103,169,207)'],
+        [50, 'rgb(28,144,153)'],
+        [60, 'rgb(1,108,89)']
+      ]
+    },
+    'circle-stroke-color': 'white',
+    'circle-stroke-width': 1,
+    'circle-opacity': {
+      stops: [
+        [14, 0],
+        [15, 1]
+      ]
+    }
+  }
+}, 'waterway-label');
+
+
+// Toggle styles
+    var layerList = document.getElementById('menu');
+    var inputs = layerList.getElementsByTagName('input');
+
+    function switchLayer(layer) {
+      var layerId = layer.target.id;
+      map.setStyle('mapbox://styles/marenab/' + layerId);
+    }
+
+    for (var i = 0; i < inputs.length; i++) {
+        inputs[i].onclick = switchLayer;
+      }
+
+  });
+
+    </script>
+</body>
+</html>
